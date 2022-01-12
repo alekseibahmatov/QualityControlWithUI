@@ -20,6 +20,8 @@ class App:
 
         self.new_pipeline_name = None
 
+        self.actions_list = ['Find item', 'Find color']
+
         self.drawMainScreen()
 
         self.root.mainloop()
@@ -55,17 +57,52 @@ class App:
         self.close_button = tkinter.Button(self.create_pipeline_name, text='Cancel', command=self.create_pipeline_name.destroy)
         self.close_button.pack(side=LEFT, padx=(150, 0), pady=(0, 15))
 
-        self.start_button = tkinter.Button(self.create_pipeline_name, text='Start', command=lambda: self.open_create_pipeline_window(self.text_field.get()))
+        self.start_button = tkinter.Button(self.create_pipeline_name, text='Start', command=lambda: self.open_create_pipeline_window(self.text_field.get(), self.create_pipeline_name))
         self.start_button.pack(side=LEFT, padx=(10, 0), pady=(0, 15))
 
-    def open_create_pipeline_window(self, name):
+    def open_create_pipeline_window(self, name, previous_window):
+        previous_window.destroy()
         self.new_pipeline_name = name
 
         self.create_pipeline = tkinter.Toplevel(self.root)
         self.create_pipeline.title('Create Pipeline')
-        self.create_pipeline.geometry('1280x720')
 
-        vid = cv2.VideoCapture(0)
+        self.action_label = tkinter.Label(self.create_pipeline, text='Select actions')
+        self.action_label.grid(row=0, column=0)
+
+        self.action_listbox = tkinter.Listbox(self.create_pipeline)
+
+        for i, entry in enumerate(self.actions_list):
+            self.action_listbox.insert(i, entry)
+        self.action_listbox.grid(row=1, column=0)
+
+        self.param_label = tkinter.Label(self.create_pipeline, text='Select parameters')
+        self.param_label.grid(row=0, column=1)
+
+        self.action_parameters_listbox = tkinter.Listbox(self.create_pipeline)
+
+        self.action_listbox.bind('<Double-Button>', lambda x: self.change_action_parameters(self.action_listbox, self.action_parameters_listbox))
+
+        self.action_parameters_listbox.grid(row=1, column=1)
+
+        self.sequence_label = tkinter.Label(self.create_pipeline, text='Current sequence')
+        self.sequence_label.grid(row=2, column=0)
+
+        self.sequence_listbox = tkinter.Listbox(self.create_pipeline)
+        self.sequence_listbox.grid(row=3, column=0)
+
+
+
+    def change_action_parameters(self, listbox1, listbox2):
+        self.action_params = [
+            ['Detalization'],
+            []
+        ]
+
+        listbox2.delete(0, tkinter.END)
+
+        for entry in self.action_params[listbox1.curselection()[0]]:
+            listbox2.insert(END, entry)
 
 
     def execute_pipeline(self, name):

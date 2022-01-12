@@ -1,0 +1,12 @@
+{
+    "config": {
+        "models": ["model_0.pt"],
+        "ethalon_color": [33.0, 33.0, 119.0]
+    },
+
+    "sequence": [
+        "get_cords 0",
+        "get_colors 2",
+        "draw_rects 30_10"
+    ]
+}
