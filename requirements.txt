@@ -1,0 +1,13 @@
+opencv-python
+Pillow
+colormath
+torch
+torchvision
+torchaudio
+matplotlib
+PyYAML
+requests
+scipy
+tqdm
+pandas
+seaborn
