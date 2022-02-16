@@ -10,7 +10,7 @@ from os.path import isfile, join
 from PIL import Image, ImageTk
 
 from pipeline_exec import Pipeline
-
+from pipeline_creation import CreatePipeline
 
 class App:
     def __init__(self):
@@ -18,9 +18,11 @@ class App:
         self.label = None
         self.root.resizable(width=False, height=False)
 
-        self.new_pipeline_name = None
-
         self.actions_list = ['Find item', 'Find color']
+
+        self.new_pipeline_name = None
+        self.task_sequence = []
+        self.last_action_chosen = None
 
         self.drawMainScreen()
 
@@ -60,6 +62,8 @@ class App:
         self.start_button = tkinter.Button(self.create_pipeline_name, text='Start', command=lambda: self.open_create_pipeline_window(self.text_field.get(), self.create_pipeline_name))
         self.start_button.pack(side=LEFT, padx=(10, 0), pady=(0, 15))
 
+
+
     def open_create_pipeline_window(self, name, previous_window):
         previous_window.destroy()
         self.new_pipeline_name = name
@@ -80,9 +84,6 @@ class App:
         self.param_label.grid(row=0, column=1)
 
         self.action_parameters_listbox = tkinter.Listbox(self.create_pipeline)
-
-        self.action_listbox.bind('<Double-Button>', lambda x: self.change_action_parameters(self.action_listbox, self.action_parameters_listbox))
-
         self.action_parameters_listbox.grid(row=1, column=1)
 
         self.sequence_label = tkinter.Label(self.create_pipeline, text='Current sequence')
@@ -91,19 +92,49 @@ class App:
         self.sequence_listbox = tkinter.Listbox(self.create_pipeline)
         self.sequence_listbox.grid(row=3, column=0)
 
+        self.execute_sequence_button = tkinter.Button(self.create_pipeline, text='Execute', command=lambda: [self.create_pipeline.destroy(), CreatePipeline(self.task_sequence, self.root)])
+        self.execute_sequence_button.grid(row=3, column=1)
 
+        self.action_listbox.bind('<Double-Button-1>', lambda x: self.open_add_task_window(self.action_listbox, self.sequence_listbox))
+        self.sequence_listbox.bind('<Double-Button-1>', lambda x: self.change_action_parameters(self.sequence_listbox, self.action_parameters_listbox))
+        self.action_parameters_listbox.bind('<Double-Button-1>', lambda x: self.action_parameters_processing(self.action_parameters_listbox, self.sequence_listbox))
+
+    def open_add_task_window(self, listbox1, listbox2):
+        self.add_task_window = tkinter.Toplevel(self.root)
+        self.add_task_window.title('Add task')
+
+        self.close_button = tkinter.Button(self.add_task_window, text='Close', command=self.add_task_window.destroy)
+        self.close_button.pack(side=LEFT)
+
+        self.add_button = tkinter.Button(self.add_task_window, text='Add', command=lambda: [self.add_task(listbox1, listbox2), self.add_task_window.destroy()])
+        self.add_button.pack(side=LEFT)
+
+    def add_task(self, listbox1, listbox2):
+        self.task_sequence.append(listbox1.get(listbox1.curselection()[0]))
+
+        listbox2.insert(END, '{}'.format(listbox1.get(listbox1.curselection()[0])))
+
+    def action_parameters_processing(self, parameters_listbox, sequence_listbox):
+        if parameters_listbox.get(parameters_listbox.curselection()[0]) == 'Delete':
+            parameters_listbox.delete(0, END)
+            self.delete_task(sequence_listbox)
+
+    def delete_task(self, sequence_listbox):
+        del self.task_sequence[self.last_action_chosen]
+        sequence_listbox.delete(self.last_action_chosen)
 
     def change_action_parameters(self, listbox1, listbox2):
         self.action_params = [
-            ['Detalization'],
-            []
+            ['Delete'],
+            ['Delete']
         ]
+
+        self.last_action_chosen = listbox1.curselection()[0]
 
         listbox2.delete(0, tkinter.END)
 
         for entry in self.action_params[listbox1.curselection()[0]]:
             listbox2.insert(END, entry)
-
 
     def execute_pipeline(self, name):
         PipelineExecuter(self.root)
@@ -137,7 +168,7 @@ class PipelineExecuter:
 
         self.label.config(image=self.imgTk)
 
-        self.update_image().after(2000, self.update_image)
+        self.update_image().after(0, self.update_image)
 
 
 if __name__ == "__main__":

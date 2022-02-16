@@ -13,7 +13,7 @@ class Pipeline:
         self.cords = None
         self.colors_count = None
         self.colors = None
-        self.cap = cv2.VideoCapture(1)
+        self.cap = cv2.VideoCapture(0)
         self.frame = None
 
         with open('pipelines/{}.json'.format(pipeline_name)) as f:
@@ -38,14 +38,11 @@ class Pipeline:
 
         for key, value in self.seq.items():
             if key == 'get_cords':
-                print("cords")
                 self.cords = return_cords(self.models[int(value)], self.frame)
             elif key == 'get_colors':
-                print("colors")
                 self.colors = get_main_colors_from_part_of_frame(self.frame, self.cords, int(value))
                 self.colors_count = int(value)
             elif key == 'draw_rects':
-                print("rects")
                 self.frame = draw_rectangles(int(value.split('_')[0]), int(value.split('_')[1]), self.ethalon_color, self.colors,
                                              self.colors_count, self.frame, self.cords)
 
