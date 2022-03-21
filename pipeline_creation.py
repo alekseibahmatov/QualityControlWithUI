@@ -16,6 +16,7 @@ class CreatePipeline:
         self.abort_button = None
         self.take_snapshot_button = None
         self.image_listbox = None
+        self.image_count_label = None
 
         self.pipeline_sequence = pipeline
         self.pipeline_name = pipeline_name
@@ -44,7 +45,7 @@ class CreatePipeline:
 
         self.isNamingWindowOpened = False
 
-        self.image_count = 0
+        self.image_index = 0
 
         self.current_image = 0
 
@@ -66,35 +67,38 @@ class CreatePipeline:
         self.labeling_window.title('Labelimg')
 
         self.image_listbox = tkinter.Listbox(self.labeling_window, height=40)
-        self.image_listbox.grid(row=0, column=0, rowspan=5)
+        self.image_listbox.grid(row=0, column=0, rowspan=6)
         self.image_listbox.bind('<Double-Button-1>', lambda x: self.switch_image_alert())
 
         self.canvas = tkinter.Canvas(self.labeling_window, width=1280, height=720)
-        self.canvas.grid(row=0, column=1, rowspan=5)
+        self.canvas.grid(row=0, column=1, rowspan=6)
 
         self.canvas.bind("<ButtonPress-1>", self.on_button_press)
         self.canvas.bind("<B1-Motion>", self.on_move_press)
         self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
 
+        self.image_count_label = tkinter.Label(self.labeling_window, text='0/50 images labeled')
+        self.image_count_label.grid(row=0, column=2)
+
         self.boxes_listbox = tkinter.Listbox(self.labeling_window)
-        self.boxes_listbox.grid(row=0, column=2)
+        self.boxes_listbox.grid(row=1, column=2)
         self.boxes_listbox.bind('<Double-Button-1>', lambda x: self.delete_box(self.boxes_listbox))
 
         self.take_snapshot_button = tkinter.Button(self.labeling_window, text='Take snapshot',
                                                    command=self.take_snapshot)
-        self.take_snapshot_button.grid(row=1, column=2)
+        self.take_snapshot_button.grid(row=2, column=2)
 
         self.abort_button = tkinter.Button(self.labeling_window, text='Abort', command=self.abort_snapshot)
         self.abort_button['state'] = 'disabled'
-        self.abort_button.grid(row=2, column=2)
+        self.abort_button.grid(row=3, column=2)
 
         self.next_button = tkinter.Button(self.labeling_window, text='Next image', command=self.next_image)
         self.next_button['state'] = 'disabled'
-        self.next_button.grid(row=3, column=2)
+        self.next_button.grid(row=4, column=2)
 
         self.finish_button = tkinter.Button(self.labeling_window, text='Finish')
         self.finish_button['state'] = 'disabled'
-        self.finish_button.grid(row=4, column=2)
+        self.finish_button.grid(row=5, column=2)
 
         self.thread = self.update_canvas()
 
@@ -114,6 +118,9 @@ class CreatePipeline:
             del self.classes[class_name]
 
         del self.rects[index]
+
+        if self.boxes_listbox.size() == 0:
+            self.next_button['state'] = 'disabled'
 
     def on_button_press(self, event):
         if self.abort_button['state'] == 'normal' and not self.isNamingWindowOpened:
@@ -149,7 +156,7 @@ class CreatePipeline:
             cancel_button.grid(row=1, column=0)
 
             self.ok_button = tkinter.Button(naming_window, text='Ok',
-                                       command=lambda: [self.add_rect(event), naming_window.destroy()])
+                                            command=lambda: [self.add_rect(event), naming_window.destroy()])
             self.ok_button.grid(row=1, column=1)
 
             self.ok_button['state'] = 'disabled'
@@ -185,16 +192,19 @@ class CreatePipeline:
         self.rect_count += 1
         self.isNamingWindowOpened = False
 
+        if self.boxes_listbox.size() > 0:
+            self.next_button['state'] = 'normal'
+
     def take_snapshot(self):
         self.take_snapshot_button['state'] = 'disabled'
         self.abort_button['state'] = 'normal'
-        self.next_button['state'] = 'normal'
+        self.next_button['state'] = 'disabled'
 
-        self.current_image = self.image_count
+        self.current_image = self.image_index
 
         self.rects = {}
 
-        self.image_listbox.insert(tkinter.END, 'Image: #{}'.format(self.image_count))
+        self.image_listbox.insert(tkinter.END, 'Image: #{}'.format(self.image_index))
 
         self.save_image()
 
@@ -243,13 +253,20 @@ class CreatePipeline:
         self.delete_image(self.current_image)
 
         # Also deleting label if user is deleting already existing image
-        if self.image_count != self.current_image:
+        if self.image_index != self.current_image:
             self.delete_label(self.current_image)
 
             # Deleting current image from image listbox
             self.image_listbox.delete(self.image_listbox_image_id)
+
+            # Updating image count in UI
+            self.image_count_label.config(text='{}/50 images labeled'.format(self.image_listbox.size()))
+
+            # Checking if there is enough images to continue
+            if self.image_listbox.size() < 50:
+                self.finish_button['state'] = 'disabled'
         else:
-            self.image_listbox.delete(self.image_listbox.get(0, tkinter.END).index('Image: #{}'.format(self.image_count)))
+            self.image_listbox.delete(self.image_listbox.get(0, tkinter.END).index('Image: #{}'.format(self.image_index)))
 
         # Clearing boxes listbox
         self.boxes_listbox.delete(0, tkinter.END)
@@ -271,7 +288,7 @@ class CreatePipeline:
         if self.next_button['text'] == 'Next image':
             # Increasing image counter
             self.current_image += 1
-            self.image_count += 1
+            self.image_index += 1
 
         # Zeroing rectangle count
         self.rect_count = 0
@@ -303,7 +320,7 @@ class CreatePipeline:
 
         frame = self.cap.read()
 
-        cv2.imwrite('pipelines/{}/data/temp_data/images/img_{}.png'.format(self.pipeline_name, self.image_count),
+        cv2.imwrite('pipelines/{}/data/temp_data/images/img_{}.png'.format(self.pipeline_name, self.image_index),
                     frame[1])
 
     def save_image_data(self):
@@ -324,21 +341,31 @@ class CreatePipeline:
                 # Writing current line to file
                 file.write('{} {} {} {} {} \n'.format(class_name, center_x, center_y, width, height))
 
+        self.image_count_label.config(text='{}/50 images labeled'.format(self.image_listbox.size()))
+
+        if self.image_listbox.size() >= 50:
+            self.finish_button['state'] = 'normal'
+
         self.isTakingSnapshot = False
 
     def switch_image_alert(self):
-        if (self.image_count != self.current_image and self.rects != self.original_rects) or self.isTakingSnapshot:
+        if (self.image_index != self.current_image and self.rects != self.original_rects) or self.isTakingSnapshot:
             save_menu = tkinter.Toplevel(self.root)
             save_menu.title('Alert!')
 
             label = tkinter.Label(save_menu, text='Are you sure you want to leave unsaved image?')
             label.grid(row=0, column=0, columnspan=3)
 
-            tkinter.Button(save_menu, text='Save', command=lambda: [self.save_image_data(), self.switch_image(), save_menu.destroy()]).grid(row=1, column=0)
+            tkinter.Button(save_menu, text='Save',
+                           command=lambda: [self.save_image_data(), self.switch_image(), save_menu.destroy()]).grid(
+                row=1, column=0)
             if self.isTakingSnapshot:
-                tkinter.Button(save_menu, text='Leave', command=lambda: [self.abort_snapshot(), self.switch_image(), save_menu.destroy()]).grid(row=1, column=1)
+                tkinter.Button(save_menu, text='Leave',
+                               command=lambda: [self.abort_snapshot(), self.switch_image(), save_menu.destroy()]).grid(
+                    row=1, column=1)
             else:
-                tkinter.Button(save_menu, text='Leave', command=lambda: [self.switch_image(), save_menu.destroy()]).grid(row=1, column=1)
+                tkinter.Button(save_menu, text='Leave',
+                               command=lambda: [self.switch_image(), save_menu.destroy()]).grid(row=1, column=1)
 
             tkinter.Button(save_menu, text='Cancel', command=save_menu.destroy).grid(row=1, column=2)
 
@@ -375,7 +402,7 @@ class CreatePipeline:
 
         # Setting current image id to class variable self.current_image so other methods could use that information
         self.current_image = image_id
-        
+
         self.image_listbox_image_id = self.image_listbox.curselection()[0]
 
         # Changing image in the canvas

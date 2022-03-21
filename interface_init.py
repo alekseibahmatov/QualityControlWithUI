@@ -56,6 +56,7 @@ class App:
         self.label1.pack(pady=(10, 0))
 
         self.text_field = tkinter.Entry(self.create_pipeline_name, width=50)
+        self.text_field.focus()
         self.text_field.pack(padx=(50, 50), pady=(10, 10))
 
         self.close_button = tkinter.Button(self.create_pipeline_name, text='Cancel',
