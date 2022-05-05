@@ -168,28 +168,28 @@ class PipelineExecuter:
     def __init__(self, root):
         self.pipeline = Pipeline('pipeline1')
 
-        self.label = tkinter.Label(root, relief=tkinter.RIDGE, width=1280, height=720)
-        self.label.grid(row=1, column=0)
-
         self.root = root
+
+        self.canvas = tkinter.Canvas(self.root, width=1280, height=720)
+        self.canvas.grid(row=1, column=0)
 
         self.thread = threading.Thread(target=self.update_image)
 
         self.thread.start()
 
     def update_image(self):
-        self.pipeline.execute()
+        while True:
+            self.pipeline.execute()
 
-        self.colored = cv2.cvtColor(self.pipeline.get_frame(), cv2.COLOR_BGR2RGB)
+            self.colored = cv2.cvtColor(self.pipeline.get_frame(), cv2.COLOR_BGR2RGB)
 
-        self.resized_video = cv2.resize(self.colored, (1280, 720))
+            self.resized_video = cv2.resize(self.colored, (1280, 720))
 
-        self.img = Image.fromarray(self.resized_video)
-        self.imgTk = ImageTk.PhotoImage(image=self.img)
+            self.img = Image.fromarray(self.resized_video)
+            self.imgTk = ImageTk.PhotoImage(image=self.img)
 
-        self.label.config(image=self.imgTk)
-
-        self.update_image().after(0, self.update_image)
+            self.canvas.create_image(0, 0, image=self.imgTk, anchor=tkinter.NW)
+            self.canvas.image = self.imgTk
 
 
 if __name__ == "__main__":

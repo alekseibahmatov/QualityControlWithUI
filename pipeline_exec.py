@@ -1,6 +1,8 @@
-from pipeline_func import load_model, unload_model, return_cords, draw_rectangles, get_color_dif, get_main_colors_from_part_of_frame
+from pipeline_func import load_model, unload_model, return_cords, draw_rectangles, get_color_dif, \
+    get_main_colors_from_part_of_frame
 import cv2
 import json
+
 
 class Pipeline:
 
@@ -13,7 +15,7 @@ class Pipeline:
         self.cords = None
         self.colors_count = None
         self.colors = None
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture(5)
         self.frame = None
 
         with open('pipelines/{}.json'.format(pipeline_name)) as f:
@@ -43,7 +45,8 @@ class Pipeline:
                 self.colors = get_main_colors_from_part_of_frame(self.frame, self.cords, int(value))
                 self.colors_count = int(value)
             elif key == 'draw_rects':
-                self.frame = draw_rectangles(int(value.split('_')[0]), int(value.split('_')[1]), self.ethalon_color, self.colors,
+                self.frame = draw_rectangles(int(value.split('_')[0]), int(value.split('_')[1]), self.ethalon_color,
+                                             self.colors,
                                              self.colors_count, self.frame, self.cords)
 
     def get_frame(self):

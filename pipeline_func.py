@@ -5,6 +5,7 @@ import torch
 from colormath.color_objects import LabColor
 from colormath.color_diff import delta_e_cie1976
 
+
 # All funcs related to AI
 
 def load_model(pipeline_name, weights):
@@ -67,7 +68,9 @@ def get_main_colors_from_part_of_frame(frame, cords, colors_count):
 
 def draw_rectangles(bg_offset, min_threshold, ethalon_color, comparison_colors, colors_count, frame, cords):
     if colors_count == 0:
-        return -1
+        for cord in cords:
+            cv2.rectangle(frame, (cord[0], cord[1]), (cord[2], cord[3]), (0, 255, 0), 2)
+        return frame
 
     j = 0
     for cord in cords:
