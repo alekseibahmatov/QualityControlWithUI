@@ -1,7 +1,7 @@
 {
     "config": {
         "models": ["model_0.pt"],
-        "ethalon_color": [33.0, 33.0, 119.0]
+        "ethalon_color": [55.0, 153.0, 90.0]
     },
 
     "sequence": [

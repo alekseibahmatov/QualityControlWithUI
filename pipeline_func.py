@@ -39,8 +39,7 @@ def get_color_dif(color1=None, color2=None):
     if color1 is None or color2 is None:
         return -1
 
-    lab_color_1 = cv2.cvtColor(np.uint8([[color1]]), cv2.COLOR_RGB2LAB)[0][0]
-    color_1 = LabColor(lab_l=lab_color_1[0], lab_a=lab_color_1[1], lab_b=lab_color_1[2])
+    color_1 = LabColor(lab_l=color1[0], lab_a=color1[1], lab_b=color1[2])
 
     lab_color_2 = cv2.cvtColor(np.uint8([[color2]]), cv2.COLOR_RGB2LAB)[0][0]
     color_2 = LabColor(lab_l=lab_color_2[0], lab_a=lab_color_2[1], lab_b=lab_color_2[2])
@@ -76,7 +75,7 @@ def draw_rectangles(bg_offset, min_threshold, ethalon_color, comparison_colors, 
     for cord in cords:
         for i in range(colors_count):
             delta = get_color_dif(ethalon_color, comparison_colors[j][i])
-
+            # print(delta)
             if bg_offset > delta > min_threshold:
                 cv2.rectangle(frame, (cord[0], cord[1]), (cord[2], cord[3]), (0, 0, 255), 2)
                 break
